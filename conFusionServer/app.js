@@ -7,6 +7,7 @@ var session = require("express-session");
 var FileStore = require("session-file-store")(session);
 var passport = require("passport");
 var authenticate = require("./authenticate");
+var config = require("./config");
 
 
 var indexRouter = require('./routes/index');
@@ -21,7 +22,7 @@ const Dishes = require("./models/dishes");
 const Promotions = require("./models/promotions");
 const Leaders = require("./models/leaders");
 
-const url = "mongodb://localhost:27017/conFusion";
+const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
 connect.then((db) => {
@@ -42,37 +43,10 @@ app.use(express.urlencoded({ extended: false }));
 /*we're not using the cookie parser when using express session*/
 /*app.use(cookieParser("12345-67890-09876-54321"));*/
 
-/*this is the session middleware*/
-app.use(session({
-  name: "session",
-  secret: "12345-67890-09876-54321",
-  saveUninitialized: false,
-  resave: false,
-  store: new FileStore()
-}));
-
-app.use(passport.initialize);
-app.use(passport.session());
+app.use(passport.initialize());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
-/*authentication will be added in here before the express.static middleware can be implemented*/
-function auth(req, res, next) {
-  console.log(req.session);
-
-  /*if the user has not yet been authorized yet*/
-  if(!req.user) {
-    var err = new Error("You are not authenticated!");
-    err.status = 403;
-    /*skips everything and goes to the error handler*/
-    return next(err);
-  }
-  else {
-    next();
-  }
-}
-app.use(auth);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
